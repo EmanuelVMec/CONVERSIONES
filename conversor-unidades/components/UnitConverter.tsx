@@ -1,8 +1,9 @@
 // components/UnitConverter.tsx
 import React, { useState, useMemo } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { units } from '../constants/units';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 type UnitCategory = keyof typeof units;
 
@@ -11,6 +12,7 @@ export default function UnitConverter() {
   const [fromUnit, setFromUnit] = useState('m');
   const [toUnit, setToUnit] = useState('km');
   const [value, setValue] = useState('1');
+  const [modalVisible, setModalVisible] = useState(false); // Estado para el modal
 
   const unitList = Object.keys(units[category].units);
 
@@ -19,6 +21,7 @@ export default function UnitConverter() {
     if (isNaN(input)) return '';
 
     if (category === 'temperature') {
+      // Conversión de temperatura
       if (fromUnit === toUnit) return value;
 
       if (fromUnit === 'C') {
@@ -45,6 +48,53 @@ export default function UnitConverter() {
     <View style={styles.container}>
       <Text style={styles.title}>Conversor de {units[category].name}</Text>
 
+      {/* Botón de Info */}
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <Icon name="information-circle" size={30} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Modal de Información */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Información de la Aplicación</Text>
+
+            <View style={styles.modalContent}>
+              <Icon name="ios-pulse" size={30} color="#4CAF50" />
+              <Text style={styles.modalText}>
+                Esta aplicación te permite realizar conversiones entre diferentes unidades de medida.
+                ¡Es ideal para situaciones cotidianas y profesionales!
+              </Text>
+            </View>
+
+            <View style={styles.modalContent}>
+              <Icon name="ios-speedometer" size={30} color="#FF5722" />
+              <Text style={styles.modalText}>
+                Las categorías incluyen: Longitud, Velocidad, Área, Volumen, Energía, Tiempo y Temperatura.
+              </Text>
+            </View>
+
+            <View style={styles.modalContent}>
+              <Icon name="ios-analytics" size={30} color="#3F51B5" />
+              <Text style={styles.modalText}>
+                Perfecta para tiendas, profesionales o cualquier persona que necesite hacer conversiones rápidas en su día a día.
+              </Text>
+            </View>
+
+            {/* Botón de cierre del modal */}
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Selector de categoría */}
       <Picker selectedValue={category} onValueChange={(v) => {
         setCategory(v);
         const u = Object.keys(units[v].units);
@@ -56,6 +106,7 @@ export default function UnitConverter() {
         ))}
       </Picker>
 
+      {/* Entrada de valor */}
       <TextInput
         style={styles.input}
         value={value}
@@ -64,23 +115,21 @@ export default function UnitConverter() {
         placeholder="Cantidad"
       />
 
-      <Picker
-  selectedValue={fromUnit}
-  onValueChange={setFromUnit}
-  style={{ backgroundColor: '#ffffffcc', borderRadius: 10, marginBottom: 12 }}
->
-  {unitList.map((u) => (
-    <Picker.Item key={u} label={u} value={u} />
-  ))}
-</Picker>
+      {/* Selector de unidad de origen */}
+      <Picker selectedValue={fromUnit} onValueChange={setFromUnit}>
+        {unitList.map((u) => (
+          <Picker.Item key={u} label={u} value={u} />
+        ))}
+      </Picker>
 
-
+      {/* Selector de unidad de destino */}
       <Picker selectedValue={toUnit} onValueChange={setToUnit}>
         {unitList.map((u) => (
           <Picker.Item key={u} label={u} value={u} />
         ))}
       </Picker>
 
+      {/* Resultado de la conversión */}
       <Text style={styles.result}>
         Resultado: {result} {toUnit}
       </Text>
@@ -104,6 +153,47 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
     marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalText: {
+    fontSize: 16,
+    marginLeft: 10,
+    color: '#333',
+    flexWrap: 'wrap',
+  },
+  closeButton: {
+    backgroundColor: '#FF5722',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 15,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontWeight: '600',
     textAlign: 'center',
   },
   input: {

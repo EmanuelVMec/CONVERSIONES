@@ -1,3 +1,5 @@
+// constants/units.ts
+
 export const units = {
   length: {
     name: 'Longitud',
@@ -6,35 +8,61 @@ export const units = {
       km: 1000,
       cm: 0.01,
       mm: 0.001,
-      mi: 1609.34,
       ft: 0.3048,
       in: 0.0254,
-    },
-  },
-  mass: {
-    name: 'Masa',
-    units: {
-      kg: 1,
-      g: 0.001,
-      lb: 0.453592,
-      oz: 0.0283495,
     },
   },
   temperature: {
     name: 'Temperatura',
     units: {
-      C: 'C',
-      F: 'F',
-      K: 'K',
+      C: 1,
+      F: 0.555555,
+      K: 1,
     },
   },
   speed: {
     name: 'Velocidad',
     units: {
-      'm/s': 1,
-      'km/h': 0.277778,
-      'mph': 0.44704,
-      'ft/s': 0.3048,
+      mps: 1,
+      kmh: 0.277778,
+      mph: 0.44704,
+    },
+  },
+  area: {
+    name: 'Área',
+    units: {
+      m2: 1,
+      km2: 1000000,
+      ha: 10000,
+      ft2: 0.092903,
+      acre: 4046.86,
+    },
+  },
+  volume: {
+    name: 'Volumen',
+    units: {
+      l: 1,
+      ml: 0.001,
+      gal: 3.78541,
+      ft3: 0.0283168,
+    },
+  },
+  energy: {
+    name: 'Energía',
+    units: {
+      J: 1,
+      kcal: 4184,
+      kWh: 3600000,
+    },
+  },
+  time: {
+    name: 'Tiempo',
+    units: {
+      s: 1,
+      min: 60,
+      h: 3600,
+      day: 86400,
+      year: 31536000,
     },
   },
 };
