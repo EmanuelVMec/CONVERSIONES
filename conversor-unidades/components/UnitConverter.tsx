@@ -1,18 +1,38 @@
-// components/UnitConverter.tsx
 import React, { useState, useMemo } from 'react';
-import { View, Text, TextInput, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { units } from '../constants/units';
+import { useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
+import AnimatedBackground from './AnimatedBackground';
+import { units } from '../constants/units';
 
 type UnitCategory = keyof typeof units;
 
 export default function UnitConverter() {
-  const [category, setCategory] = useState<UnitCategory>('length');
-  const [fromUnit, setFromUnit] = useState('m');
-  const [toUnit, setToUnit] = useState('km');
+  const route = useRoute();
+  const routeCategory = (route.params as any)?.category;
+  const fallbackCategory: UnitCategory = 'length';
+  const isValidCategory = routeCategory && routeCategory in units;
+
+  const [category] = useState<UnitCategory>(
+    isValidCategory ? routeCategory : fallbackCategory
+  );
+  const [fromUnit, setFromUnit] = useState(
+    Object.keys(units[category].units)[0]
+  );
+  const [toUnit, setToUnit] = useState(
+    Object.keys(units[category].units)[1] || Object.keys(units[category].units)[0]
+  );
   const [value, setValue] = useState('1');
-  const [modalVisible, setModalVisible] = useState(false); // Estado para el modal
+  const [modalVisible, setModalVisible] = useState(false);
 
   const unitList = Object.keys(units[category].units);
 
@@ -20,187 +40,166 @@ export default function UnitConverter() {
     const input = parseFloat(value);
     if (isNaN(input)) return '';
 
+    const roundSmart = (num: number) => {
+      if (num >= 1) return parseFloat(num.toFixed(4));
+      if (num >= 0.01) return parseFloat(num.toFixed(6));
+      return parseFloat(num.toPrecision(2));
+    };
+
     if (category === 'temperature') {
-      // Conversión de temperatura
       if (fromUnit === toUnit) return value;
 
+      let tempResult = 0;
+
       if (fromUnit === 'C') {
-        return toUnit === 'F'
-          ? ((input * 9) / 5 + 32).toFixed(2)
-          : (input + 273.15).toFixed(2);
+        tempResult = toUnit === 'F'
+          ? (input * 9) / 5 + 32
+          : input + 273.15;
       } else if (fromUnit === 'F') {
-        return toUnit === 'C'
-          ? (((input - 32) * 5) / 9).toFixed(2)
-          : ((((input - 32) * 5) / 9) + 273.15).toFixed(2);
+        tempResult = toUnit === 'C'
+          ? ((input - 32) * 5) / 9
+          : ((input - 32) * 5) / 9 + 273.15;
       } else {
-        return toUnit === 'C'
-          ? (input - 273.15).toFixed(2)
-          : (((input - 273.15) * 9) / 5 + 32).toFixed(2);
+        tempResult = toUnit === 'C'
+          ? input - 273.15
+          : ((input - 273.15) * 9) / 5 + 32;
       }
-    } else {
-      const base = input * (units[category].units as any)[fromUnit];
-      const converted = base / (units[category].units as any)[toUnit];
-      return converted.toFixed(4);
+
+      return roundSmart(tempResult).toString();
     }
+
+    const fromValue = (units[category].units as any)[fromUnit];
+    const toValue = (units[category].units as any)[toUnit];
+
+    if (!fromValue || !toValue) return '';
+
+    const base = input * fromValue;
+    const converted = base / toValue;
+
+    return roundSmart(converted).toString();
   }, [value, fromUnit, toUnit, category]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Conversor de {units[category].name}</Text>
-
-      {/* Botón de Info */}
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <Icon name="information-circle" size={30} color="#fff" />
-      </TouchableOpacity>
-
-      {/* Modal de Información */}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Información de la Aplicación</Text>
-
-            <View style={styles.modalContent}>
-              <Icon name="ios-pulse" size={30} color="#4CAF50" />
-              <Text style={styles.modalText}>
-                Esta aplicación te permite realizar conversiones entre diferentes unidades de medida.
-                ¡Es ideal para situaciones cotidianas y profesionales!
-              </Text>
-            </View>
-
-            <View style={styles.modalContent}>
-              <Icon name="ios-speedometer" size={30} color="#FF5722" />
-              <Text style={styles.modalText}>
-                Las categorías incluyen: Longitud, Velocidad, Área, Volumen, Energía, Tiempo y Temperatura.
-              </Text>
-            </View>
-
-            <View style={styles.modalContent}>
-              <Icon name="ios-analytics" size={30} color="#3F51B5" />
-              <Text style={styles.modalText}>
-                Perfecta para tiendas, profesionales o cualquier persona que necesite hacer conversiones rápidas en su día a día.
-              </Text>
-            </View>
-
-            {/* Botón de cierre del modal */}
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Selector de categoría */}
-      <Picker selectedValue={category} onValueChange={(v) => {
-        setCategory(v);
-        const u = Object.keys(units[v].units);
-        setFromUnit(u[0]);
-        setToUnit(u[1] || u[0]);
-      }}>
-        {Object.keys(units).map((k) => (
-          <Picker.Item key={k} label={units[k as UnitCategory].name} value={k} />
-        ))}
-      </Picker>
-
-      {/* Entrada de valor */}
-      <TextInput
-        style={styles.input}
-        value={value}
-        keyboardType="numeric"
-        onChangeText={setValue}
-        placeholder="Cantidad"
+    <View style={styles.wrapper}>
+      <LinearGradient
+        colors={['#4b0082', '#000000', '#00bcd4']}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1.3 }}
       />
+      <AnimatedBackground />
 
-      {/* Selector de unidad de origen */}
-      <Picker selectedValue={fromUnit} onValueChange={setFromUnit}>
-        {unitList.map((u) => (
-          <Picker.Item key={u} label={u} value={u} />
-        ))}
-      </Picker>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Conversor de {units[category].name}</Text>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Icon name="information-circle-outline" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Selector de unidad de destino */}
-      <Picker selectedValue={toUnit} onValueChange={setToUnit}>
-        {unitList.map((u) => (
-          <Picker.Item key={u} label={u} value={u} />
-        ))}
-      </Picker>
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Información de la Aplicación</Text>
+              <View style={styles.modalContent}>
+                <Icon name="ios-pulse" size={30} color="#4CAF50" />
+                <Text style={styles.modalText}>
+                  Esta aplicación te permite realizar conversiones entre diferentes unidades de medida.
+                </Text>
+              </View>
+              <View style={styles.modalContent}>
+                <Icon name="ios-speedometer" size={30} color="#FF5722" />
+                <Text style={styles.modalText}>
+                  Las categorías incluyen: Longitud, Velocidad, Área, Volumen, Energía, Tiempo, Temperatura, Masa, y más.
+                </Text>
+              </View>
+              <View style={styles.modalContent}>
+                <Icon name="ios-analytics" size={30} color="#3F51B5" />
+                <Text style={styles.modalText}>
+                  Ideal para estudiantes, profesionales o cualquier persona que necesite hacer conversiones rápidas.
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
-      {/* Resultado de la conversión */}
-      <Text style={styles.result}>
-        Resultado: {result} {toUnit}
-      </Text>
+        <TextInput
+          style={styles.input}
+          value={value}
+          keyboardType="numeric"
+          onChangeText={setValue}
+          placeholder="Cantidad"
+          placeholderTextColor="#ccc"
+        />
+
+        <Picker selectedValue={fromUnit} onValueChange={setFromUnit} style={styles.picker}>
+          {unitList.map((u) => (
+            <Picker.Item key={u} label={u} value={u} />
+          ))}
+        </Picker>
+
+        <Picker selectedValue={toUnit} onValueChange={setToUnit} style={styles.picker}>
+          {unitList.map((u) => (
+            <Picker.Item key={u} label={u} value={u} />
+          ))}
+        </Picker>
+
+        <Text style={styles.result}>
+          Resultado: {result} {toUnit}
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    margin: 20,
     padding: 20,
-    borderRadius: 20,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1.2,
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    backdropFilter: 'blur(10px)',
+    shadowOffset: { width: 0, height: 6 },
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    maxWidth: 400,
-  },
-  modalTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  modalContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  modalText: {
-    fontSize: 16,
-    marginLeft: 10,
-    color: '#333',
-    flexWrap: 'wrap',
-  },
-  closeButton: {
-    backgroundColor: '#FF5722',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 15,
-  },
-  closeButtonText: {
+    fontWeight: 'bold',
     color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffffaa',
     borderRadius: 10,
     padding: 12,
     fontSize: 16,
+    marginBottom: 12,
+    color: '#000',
+  },
+  picker: {
+    backgroundColor: '#ffffffcc',
+    borderRadius: 10,
     marginBottom: 12,
   },
   result: {
@@ -209,5 +208,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     marginTop: 24,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '85%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalText: {
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#333',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  closeButton: {
+    backgroundColor: '#FF5722',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+  },
+  closeButtonText: {
+    textAlign: 'center',
+    color: '#fff',
+    fontWeight: '600',
   },
 });

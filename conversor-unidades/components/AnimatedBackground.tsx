@@ -25,7 +25,7 @@ function FloatingCircle({ index }: { index: number }) {
 
   React.useEffect(() => {
     position.value = withRepeat(
-      withTiming(-50, { duration: 4000 + index * 300 }),
+      withTiming(-50, { duration: 4000 + index * 4000 }),
       -1,
       true
     );
@@ -37,7 +37,7 @@ function FloatingCircle({ index }: { index: number }) {
     };
   });
 
-  const size = Math.random() * 60 + 30;
+  const size = Math.random() * 77 + 60;
   const left = Math.random() * width;
   const top = Math.random() * height;
   const colors = ['#FFD700', '#FF69B4', '#87CEEB', '#98FB98'];
