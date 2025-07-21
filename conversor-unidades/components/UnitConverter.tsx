@@ -147,6 +147,8 @@ export default function UnitConverter() {
           ))}
         </Picker>
 
+<Text style={styles.label}>Convertir a:</Text>
+
         <Picker selectedValue={toUnit} onValueChange={setToUnit} style={styles.picker}>
           {unitList.map((u) => (
             <Picker.Item key={u} label={u} value={u} />
@@ -166,6 +168,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+  label: {
+  textAlign: 'center',
+  marginVertical: 8,
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: 'white',
+},
   container: {
     margin: 20,
     padding: 20,
